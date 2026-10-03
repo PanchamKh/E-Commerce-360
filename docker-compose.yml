@@ -1,0 +1,36 @@
+# E-Commerce 360 — full local stack.
+#   docker compose up -d      start Kafka, ZooKeeper, MongoDB
+#   docker compose ps         check health
+#   docker compose down       stop (add -v to wipe MongoDB data too)
+services:
+  zookeeper:
+    image: bitnami/zookeeper:3.8
+    container_name: e360-zookeeper
+    ports: ["2181:2181"]
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka:
+    image: bitnami/kafka:3.4
+    container_name: e360-kafka
+    ports: ["9092:9092"]
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=false
+      - KAFKA_CFG_NUM_PARTITIONS=3
+    depends_on: [zookeeper]
+
+  # Optional: only needed if you are NOT using MongoDB Atlas.
+  # Atlas Charts cannot read this local instance — see README.
+  mongo:
+    image: mongo:7
+    container_name: e360-mongo
+    ports: ["27017:27017"]
+    volumes:
+      - e360-mongo-data:/data/db
+
+volumes:
+  e360-mongo-data:
